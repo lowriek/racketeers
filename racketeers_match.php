@@ -97,7 +97,7 @@ function racketeers_display_matches( ) {
 function racketeers_handle_form(  ) { 
 
 
-	if ( ! isset( $_POST['racketeers_action'] ) ) return;
+	
 
 
 	global $debug;
@@ -105,6 +105,7 @@ function racketeers_handle_form(  ) {
 			echo "[racketeers_handle_form] ";
 			echo "<pre>"; print_r( $_POST ); echo "</pre>";
 	}
+	if ( ! isset( $_POST['racketeers_action'] ) ) return;
 
 	switch ( $_POST[ 'racketeers_action' ] ) {
 		case "Update Group":
@@ -123,7 +124,19 @@ function racketeers_handle_form(  ) {
 		case "Add Match":
 			racketeers_add_match( );
 			break;
-			
+
+		case "Select Players":
+			racketeers_select_players_form( );
+			break;
+
+		case "Add Players":
+			racketeers_add_players_to_group( );
+			break;
+
+		case "Delete Players":
+			racketeers_delete_players_from_group( );
+			break;
+
 		default:
 			echo "[racketeers_handle_form]: bad action";
 	}
@@ -208,6 +221,8 @@ function racketeers_display_group_form( ){
 			<input type="submit" name="racketeers_action" value="Update Group" />
 			<input type="submit" name="racketeers_action" value="Delete Group Information" />
 			<input type="submit" name="racketeers_action" value="Add Match" />
+			<input type="submit" name="racketeers_action" value="Select Players" />
+
 		</form>
 		</form>
 	</fieldset>
@@ -317,6 +332,12 @@ function racketeers_add_match(  ) {
 
 	$day = get_user_meta( $current_user_id, "racketeers_day", true );
 	$lasttimestamp = get_user_meta( $current_user_id, "racketeers_last_match_timestamp", true );
+
+	if ($day == "" || $lasttimestamp == "") {
+		echo "update group info before adding match";
+		return 0;
+	}
+
 	$nexttimestamp = racketeers_get_next_match_timestamp( $day, $lasttimestamp);
 
 	if ( $debug ) {
@@ -420,6 +441,95 @@ function racketeers_delete_match( $match_id ) {
 
 	return $rows_affected;
 } 
+
+/** racketeers_select_players_form()
+ *  Creates a form so an organizer can manage player subscriptions
+ **/
+function racketeers_select_all_players_form() {
+	global $debug;
+	if ( $debug ) {
+		echo "[racketeers_select_players]";
+	}
+
+	$users = get_users( array( 'role' => 'subscriber' ) );
+	$players = array();
+	foreach ( $users as $user ) {
+		array_push ( $players, $user->user_id, $user->user_email );
+	}
+	$players = array_filter( $players );
+
+	?>
+	<fieldset>
+		<legend>Manage Players></legend>
+		<form method="post">	
+			<?php 
+				racketeers_create_player_menu( $players, "players");
+			?>
+			<input type="submit" name="racketeers_player_action" value="Add Players" />
+			<input type="submit" name="racketeers_player_action" value="Remove Players" />
+
+		</form>
+		</form>
+	</fieldset>
+	<?php
+}
+function racketeers_select_players_form(  ) {
+	global $debug;
+	if ( $debug ) {
+		echo "[racketeers_select_players]";
+	}
+
+	
+	?>
+	<fieldset>
+		<legend>Manage Players></legend>
+		<form method="post">	
+			<?php 
+				$all_players = racketeers_get_all_players();
+				$subscribed_players = racketeers_get_subscribed_players();
+				racketeers_create_player_menu( $all_players, "all_players[]");
+				racketeers_create_player_menu( $subscribed_players, "subscribed_players[]");
+			?>
+			<input type="submit" name="racketeers_player_action" value="Add Players" />
+			<input type="submit" name="racketeers_player_action" value="Remove Players" />
+
+		</form>
+		</form>
+	</fieldset>
+	<?php
+}
+
+function racketeers_get_all_players() {
+global $debug;
+	if ( $debug ) {
+		echo "[racketeers_get_all_players]";
+	}
+
+	$users = get_users( array( 'role' => 'subscriber' ) );
+	$players = array();
+	foreach ( $users as $user ) {
+		array_push ( $players, $user->user_id, $user->user_email );
+	}
+	$players = array_filter( $players );
+	return $players;
+}
+function racketeers_get_subscribed_players(  ){
+	global $debug;
+	if ( $debug ) {
+		echo "[racketeers_get_subscribed_players]";
+	}
+
+	// get the current user id
+
+	$search_for = "*". get_current_user_id(). "*";
+	$users = get_users( array( 'meta_key' => 'my_groups', 'meta_value' => $search_for) );
+	$players = array();
+	foreach ( $users as $user ) {
+		array_push ( $players, $user->user_id, $user->user_email );
+	}
+	$players = array_filter( $players );
+}
+
 
 /** racketeers_show_match_players
  *  dumps the players for a specific math
@@ -530,7 +640,8 @@ $racketeers_timeslots = array (
 function racketeers_create_timeslot_menu( $name, $selected = 0 ){
 	global $racketeers_timeslots;
 	echo " Time: ";
-	racketeers_create_menu ( $name, $racketeers_timeslots, $selected ); 
+	$size = 10;
+	racketeers_create_menu ( $name, $racketeers_timeslots, $selected, $size ); 
 
 }
 function racketeers_get_timeslot ( $timeslot_number ) { 
@@ -550,7 +661,8 @@ function racketeers_create_day_menu( $name, $selected = 0 ){
 	// corresponds to MySQL day of the week
 	global $racketeers_day_of_week;
 	echo " Day :";
-	racketeers_create_menu ( $name, $racketeers_day_of_week, $selected ); 
+	$size = 7;
+	racketeers_create_menu ( $name, $racketeers_day_of_week, $selected, $size ); 
 }
 function racketeers_get_day ( $day_number ) { 
 	global $racketeers_day_of_week;
@@ -567,7 +679,8 @@ $racketeers_match_duration = array (
 function racketeers_create_match_duration_menu( $name,  $selected = 60 ){
 	global $racketeers_match_duration;
 	echo " Duration: ";
-	racketeers_create_menu ( $name, $racketeers_match_duration , $selected ); 
+	$size = 2;
+	racketeers_create_menu ( $name, $racketeers_match_duration , $selected, $size ); 
 }
 function racketeers_get_match_duration ( $match_duration_number ) { 
 	global $racketeers_match_duration;
@@ -575,14 +688,43 @@ function racketeers_get_match_duration ( $match_duration_number ) {
 }
 /* END   racketeers_match_duration support *********************/
 
-function racketeers_create_menu( $name, $contents, $selected )
+function racketeers_create_menu( $name, $contents, $selected, $multiple = false, $size = 1)
 {
-	echo "<select name=\"$name\">";
+	if ( $multiple ) {
+		echo "<select name='$name' multiple size= 'size' >";
+	} else {
+		echo "<select name='$name' size= 'size'>";
+	}
     foreach ( $contents as $key => $value ) {
     	if ( $selected == $key )
-    		echo "<option value=\"$key\" selected > $value </option>\n";
+    		echo "<option value='$key' selected > $value </option>\n";
     	else
-			echo "<option value=\"$key\"> $value </option>\n";
+			echo "<option value='$key'> $value </option>\n";
 	}
 	echo "</select>";
+}
+
+/* player menu ***********************/
+function racketeers_create_player_menu( $players, $menu_name ){
+	echo " $menu_name: ";
+	racketeers_create_menu ( $menu_name, $players , 0 , true, 10); 
+}
+/* END   racketeers_match_duration support *********************/
+
+
+function racketeers_add_players_to_group(){
+	echo "<pre>";
+	print_r ( $_POST );
+	$allplayers = $_POST['allplayers'];
+	$current_user_id = get_current_user_id();
+	foreach ( $allplayers as $id ) {
+		update_user_meta ( $id, "my_groups", $current_user_id);
+	}
+	echo "</pre>";
+
+}
+function racketeers_delete_players_from_group() {
+	echo "<pre>";
+	print_r ( $_POST );
+	echo "</pre>";
 }
