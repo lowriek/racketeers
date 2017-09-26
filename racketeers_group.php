@@ -54,6 +54,7 @@ function racketeers_display_group_form( ){
 	$current_user_id = get_current_user_id();
 
 	global $debug;
+	$debug = false;
 	if ( $debug ) {
 		echo "[racketeers_display_group_form] user_id is $current_user_id</br>";
 	}
@@ -93,6 +94,7 @@ function racketeers_display_group_form( ){
 		</form>
 	</fieldset>
 	<?php
+	$debug = true;
 }
 
 
@@ -180,11 +182,6 @@ function racketeers_is_user_organizer( $current_user_id ){
  *  adds and deletes players from group meta data
  */
 function racketeers_manage_players_form(  ) {
-	global $debug;
-	if ( $debug ) {
-		echo "[racketeers_manage_players_form]";
-	}
-
 	?>
 	<fieldset>
 		<legend>Manage Players</legend>
@@ -215,33 +212,20 @@ function racketeers_remove_all_players() {
  *  Get all the users who are subscribers.  Save their id and email in an array.
  **/
 function racketeers_get_all_players() {
-global $debug;
-	if ( $debug ) {
-		echo "[racketeers_get_all_players]</br>";
-	}
+	global $debug;
 
 	$users = get_users( array( 'role' => 'subscriber' ) );
-	if ( $debug ) {
-		//echo "<pre>"; print_r( $users ); echo "</pre>";
-	}
 
 	$player = array();
 	foreach ( $users as $user ) {
 		$player[ $user->ID ] =  $user->user_email ;
-		if ( $debug ) {
-			echo "[racketeers_get_all_players] " . $user->ID ." " . $user->user_email . "</br>";
-		}
+
 	}
 
-	if ( $debug ) {
-		echo "[racketeers_get_all_players] <pre>";
-		print_r ( $player );
-		echo "</pre>";
-	}
 	return $player;
 }
 
-/** racketeers_get_all_players()
+/** racketeers_get_subscribed_players()
  *  Get all the users who are subscribed to the current group.  Save their id and email in an array.
  *  Users who are subscribed have their id in the user meta from the current user
  **/
@@ -251,26 +235,16 @@ function racketeers_get_subscribed_players(  ){
 	$current_user_id = get_current_user_id();
 	if ( $debug ) {
 		echo "[racketeers_get_subscribed_players]</br>";
-		//$foo = get_user_meta( $current_user_id );
-		//echo "<pre>"; print_r($foo); echo "</pre>";
 	}
 	$players_reg = get_user_meta( $current_user_id, 'group_member', false );
-	if ( $debug ) {
-		echo "[racketeers_get_subscribed_players] players_reg <pre>";
-		print_r ( $players_reg );
-		echo "</pre>";
-	}
+
 	$players = array();
 	foreach ( $players_reg as $id ) {
-		if ( ! $user_info = get_userdata( $id ) )  return;
+		if ( ! $user_info = get_userdata( $id ) )  
+			return;
 		$players[ $id ] =  $user_info->user_email;
-		if ( $debug )
-				echo "<pre>"; print_r($user_info); echo "</pre>";
-
-		if ( $debug ) {		
-			echo "[racketeers_get_subscribed_players]:  $id " .	$players[ $id ] . " <br>";
-		}
 	}
+
 	return $players;
 }
 
@@ -375,31 +349,39 @@ function racketeers_create_player_menu( $players, $menu_name ){
 
 function racketeers_add_players_to_group(){
 	global $debug;
-	if ( $debug ) {
-		echo "[racketeers_add_players_to_group] Post Vars <pre>";
-		print_r ( $_POST );
-		echo "</pre>";
-	}
+	
 	if ( ! isset( $_POST['all_players'] ) ) {
 		return;
 	}
 	$allplayers = $_POST['all_players'];
+
+	$current_user_id = get_current_user_id();
+	foreach ( $allplayers as $id ) {
+		add_user_meta ( $current_user_id, 'group_member', $id);
+	}
+}
+function racketeers_delete_players_from_group() {
+	global $debug;
+
 	if ( $debug ) {
-		echo "[racketeers_add_players_to_group] allplayers <pre>";
-		print_r ( $allplayers );
+		echo "[racketeers_delete_players_from_group] Post Vars <pre>";
+		print_r ( $_POST );
+		echo "</pre>";
+	}
+	if ( ! isset( $_POST['subscribed_players'] ) ) {
+		return;
+	}
+	$subscribed_players = $_POST['subscribed_players'];
+	if ( $debug ) {
+		echo "[racketeers_delete_players_from_group] subcribed_players <pre>";
+		print_r ( $subscribed_players );
 		echo "</pre>";
 	}
 	$current_user_id = get_current_user_id();
-	foreach ( $allplayers as $id ) {
+	foreach ( $subscribed_players as $id ) {
 		if ( $debug ) {
-			echo "[racketeers_add_players_to_group] loop $id </br>";
+			echo "[subscribed_players] loop $id </br>";
 		}
-		add_user_meta ( $current_user_id, 'group_member', $id);
+		delete_user_meta ( $current_user_id, 'group_member', $id);
 	}
-
-}
-function racketeers_delete_players_from_group() {
-	echo "<pre>";
-	print_r ( $_POST );
-	echo "</pre>";
 }

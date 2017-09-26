@@ -135,7 +135,7 @@ function racketeers_handle_form(  ) {
 			racketeers_manage_players_form( );
 			return false;
 	
-		case "Delete Players":
+		case "Remove Players":
 			racketeers_delete_players_from_group( );
 			racketeers_manage_players_form( );
 			return false;
