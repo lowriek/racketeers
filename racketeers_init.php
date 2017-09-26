@@ -21,6 +21,7 @@ define("MATCH_TABLE_NAME","racketeers_match");
 
 /* wire in the match stuff */
 include 'racketeers_match.php';
+include 'racketeers_group.php';
 add_shortcode( 'racketeers_organizer_hub', 'racketeers_organizer_hub' );
 
 /**
