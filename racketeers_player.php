@@ -47,12 +47,10 @@ function racketeers_display_player_form () {
 
 	$groups = racketeers_get_all_groups();
 
-	//echo "<pre>"; print_r ( $groups ); echo "</pre>";
-
-	global $debug;
-
 	foreach ( $groups as $g ) {
-		racketeers_display_matches_by_group( $g->ID, $g->display_name);
+		if (racketeers_player_is_a_member( $g->ID ) ) {
+			racketeers_display_matches_by_group( $g->ID, $g->display_name);
+		}
 	}
 }
 
@@ -120,6 +118,20 @@ function racketeers_is_user_player( $current_user_id ){
 	return false;
 }
 
+/** racketeers_player_is_a_member
+ *  returns true if the current user is a member of the group with id $group_id
+ *  returns false otherwise.
+ *
+ *  get all the members of the group, and see if the current user is one of them.
+ */
+function racketeers_player_is_a_member( $group_id ){
+
+	$players_reg = get_user_meta( $group_id, 'group_member', false );
+	$current_user_id = get_current_user_id();
+
+	return in_array( $current_user_id, $players_reg );
+}
+
 /** 
  * Display all the matches in the match table.
  *
@@ -143,7 +155,7 @@ function racketeers_display_matches_by_group( $group_id, $group_name ) {
 			racketeers_create_player_match_table_row( $thismatch );
 		}
 	} else { 
-		?><h3>No matches for $group_name</h3><?php
+		echo "<h3>No matches for $group_name</h3>";
 	}
 }
 /**
