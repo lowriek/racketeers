@@ -20,9 +20,11 @@ define("MATCH_TABLE_NAME","racketeers_match");
 
 
 /* wire in the match stuff */
-include 'racketeers_match.php';
 include 'racketeers_group.php';
+include 'racketeers_match.php';
+include 'racketeers_player.php';
 add_shortcode( 'racketeers_organizer_hub', 'racketeers_organizer_hub' );
+add_shortcode( 'racketeers_player_hub', 'racketeers_player_hub' );
 
 /**
  * nt_install() - creates the match table

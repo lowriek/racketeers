@@ -1,10 +1,10 @@
 <?php
 /**
- **  This file contains all the support functions for group players.
- **  Matches can only be created by hosts (aka match organizers).
+ **  This file contains all the support functions for groups.
+ **  Matches can only be created by users with author privs (aka group accounts).
  **  The match table is created with the SQL below.
- **  Players are users.
- **
+ **  Players are users with subscriber role.
+ **  Groups are users with author role.
  **/
 
 
@@ -53,12 +53,6 @@ function racketeers_display_group_form( ){
 
 	$current_user_id = get_current_user_id();
 
-	global $debug;
-	$debug = false;
-	if ( $debug ) {
-		echo "[racketeers_display_group_form] user_id is $current_user_id</br>";
-	}
-
 	if ( ! racketeers_is_user_organizer( $current_user_id ) ) {
 		echo "[racketeers_display_group_form] Sorry, you are not an organizer!</br>";
 		return;
@@ -79,22 +73,29 @@ function racketeers_display_group_form( ){
 	<fieldset>
 		<legend>Group Information for <?php echo "$first_name $last_name"; ?></legend>
 		<form method="post">	
+
+			<input type="submit" name="racketeers_action" value="Update Group" />
+			<input type="submit" name="racketeers_action" value="Delete Group Information" />
+			<input type="submit" name="racketeers_action" value="Add Match" />
+			</br></br>
 			<?php 
 				racketeers_create_day_menu( "racketeers_day" , $day ); 
 		 		racketeers_create_timeslot_menu( "racketeers_time", $time ); 
 				racketeers_create_match_duration_menu( "racketeers_match_duration", $duration );
 			?>
-			<input type="submit" name="racketeers_action" value="Update Group" />
-			<input type="submit" name="racketeers_action" value="Delete Group Information" />
-			<input type="submit" name="racketeers_action" value="Add Match" />
 			</br></br>
 			<input type="submit" name="racketeers_action" value="Manage Group Players" />
-
-		</form>
+			<ul>
+			<?php
+				$players = racketeers_get_subscribed_players();
+				foreach ($players as $p ){
+					echo "<li>$p</li>";
+				}
+			?>
+			</ul>
 		</form>
 	</fieldset>
 	<?php
-	$debug = true;
 }
 
 
@@ -109,10 +110,7 @@ function racketeers_delete_group_info ( ) {
 	$current_user_id = get_current_user_id();
 
 	global $debug;
-	if ( $debug ) {
-		echo "[racketeers_delete_group] user_id is $current_user_id </br> ";
-	}
-
+	
 	if ( ! racketeers_is_user_organizer( $current_user_id ) ){
 		if ( $debug ) {
 			echo "[racketeers_delete_group] delete_group_info failed, user is not an organizer </br> ";
@@ -152,9 +150,6 @@ function racketeers_delete_group_info ( ) {
 function racketeers_is_user_organizer( $current_user_id ){
 
 	global $debug;
-	if ( $debug ) {
-		echo "[racketeers_is_user_organizer] user_id is $current_user_id </br> ";
-	}
 
 	$user_info = get_userdata( $current_user_id );
 
@@ -163,10 +158,10 @@ function racketeers_is_user_organizer( $current_user_id ){
 		return false;
 	}
 
-	if ( $debug ) {
-		echo "[racketeers_is_user_organizer] roles are: ";
-		echo implode(', ', $user_info->roles)."</br>";
-	}
+	// if ( $debug ) {
+	// 	echo "[racketeers_is_user_organizer] roles are: ";
+	// 	echo implode(', ', $user_info->roles)."</br>";
+	// }
 
 	$user_role = $user_info->roles;
 
@@ -233,9 +228,7 @@ function racketeers_get_subscribed_players(  ){
 	global $debug;
 
 	$current_user_id = get_current_user_id();
-	if ( $debug ) {
-		echo "[racketeers_get_subscribed_players]</br>";
-	}
+
 	$players_reg = get_user_meta( $current_user_id, 'group_member', false );
 
 	$players = array();
@@ -346,13 +339,12 @@ function racketeers_create_player_menu( $players, $menu_name ){
 }
 /* END   racketeers_match_duration support *********************/
 
-
+/** racketeers_add_players_to_group()
+ *  adds selected players from the all_players menu to the user_meta
+ *  of the group user
+ */
 function racketeers_add_players_to_group(){
-	global $debug;
-	
-	if ( ! isset( $_POST['all_players'] ) ) {
-		return;
-	}
+
 	$allplayers = $_POST['all_players'];
 
 	$current_user_id = get_current_user_id();
@@ -360,28 +352,28 @@ function racketeers_add_players_to_group(){
 		add_user_meta ( $current_user_id, 'group_member', $id);
 	}
 }
-function racketeers_delete_players_from_group() {
-	global $debug;
 
-	if ( $debug ) {
-		echo "[racketeers_delete_players_from_group] Post Vars <pre>";
-		print_r ( $_POST );
-		echo "</pre>";
-	}
-	if ( ! isset( $_POST['subscribed_players'] ) ) {
-		return;
-	}
+/** racketeers_add_players_to_group()
+ *  deletes selected players from the subscribed_players menu from the user_meta
+ *  of the group user
+ */
+function racketeers_delete_players_from_group() {
+
 	$subscribed_players = $_POST['subscribed_players'];
-	if ( $debug ) {
-		echo "[racketeers_delete_players_from_group] subcribed_players <pre>";
-		print_r ( $subscribed_players );
-		echo "</pre>";
-	}
+
 	$current_user_id = get_current_user_id();
 	foreach ( $subscribed_players as $id ) {
-		if ( $debug ) {
-			echo "[subscribed_players] loop $id </br>";
-		}
 		delete_user_meta ( $current_user_id, 'group_member', $id);
 	}
+}
+
+/** racketeers_get_all_groups()
+ *  Get all the users who are authors.  Return their names in an array.
+ **/
+function racketeers_get_all_groups() {
+	global $debug;
+
+	$users = get_users( array( 'role' => 'author' ) );
+
+	return $users;
 }
