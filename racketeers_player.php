@@ -75,16 +75,32 @@ function racketeers_handle_player_form() {
 	switch ( $_POST['player_action'] ) {
 		case "Add me as host":
 			$thismatch['racketeers_match_host'] = $current_user_id;
+			$thismatch['racketeers_match_host_status'] = "unconfirmed";
 			break;
 		case "Add me as player 1":
 			$thismatch['racketeers_match_player_1'] = $current_user_id;
+			$thismatch['racketeers_match_player_1_status'] = "unconfirmed";
 			break;
 		case "Add me as player 2":
 			$thismatch['racketeers_match_player_2'] = $current_user_id;
+			$thismatch['racketeers_match_player_2_status'] = "unconfirmed";
 			break;		
 		case "Add me as player 3":
 			$thismatch['racketeers_match_player_3'] = $current_user_id;
+			$thismatch['racketeers_match_player_2_status'] = "unconfirmed";
 			break;	
+
+		case "I need a sub":
+			if ( $current_user_id == $thismatch['racketeers_match_host']) {
+				$thismatch['racketeers_match_host_status'] = "needsub";
+			} else if ( $current_user_id == $thismatch['racketeers_match_player_1']) {
+				$thismatch['racketeers_match_player_1_status'] = "needsub";
+			} else if ( $current_user_id == $thismatch['racketeers_match_player_2']) {
+				$thismatch['racketeers_match_player_2_status'] = "needsub";
+			} else if ( $current_user_id == $thismatch['racketeers_match_player_3']) {
+				$thismatch['racketeers_match_player_3_status'] = "needsub";
+			}
+			break;
 		default:
 			echo "bad action";
 	}
@@ -208,19 +224,21 @@ function racketeers_show_match_players_choice ( $thismatch )
 
 	if ( isset ( $thismatch->racketeers_match_host ) ) {
 		$user_info = get_userdata( $thismatch->racketeers_match_host );
-		echo "host: " . $user_info->data->display_name . "</br>";
+		echo "host: " . $user_info->data->display_name . " " . $thismatch->racketeers_match_host_status . "</br>";
+		racketeers_add_sub_button( $current_user_id, $user_info->ID, $thismatch->racketeers_match_host_status ); 
 
 	} else if  ( ! $current_user_is_playing ) {		
-		echo '<input type="submit" name="player_action" value="Add me as host" /></br>';
+		echo ' <input type="submit" name="player_action" value="Add me as host" /></br>';
 		$placed_button = true;
 	}
 
 	if ( isset ($thismatch->racketeers_match_player_1) ) {
 		$user_info = get_userdata( $thismatch->racketeers_match_player_1 );
-		echo "pla1: ". $user_info->data->display_name . "</br>";
+		echo "pla1: ". $user_info->data->display_name . " " . $thismatch->racketeers_match_player_1_status . "</br>";
+		racketeers_add_sub_button( $current_user_id, $user_info->ID, $thismatch->racketeers_match_player_1_status ); 
 
 	} else if ( ! $placed_button && ! $current_user_is_playing ) {
-		echo '<input type="submit" name="player_action" value="Add me as player 1" /></br>';
+		echo ' <input type="submit" name="player_action" value="Add me as player 1" /></br>';
 		$placed_button = true;
 
 	} else {
@@ -229,10 +247,11 @@ function racketeers_show_match_players_choice ( $thismatch )
 
 	if ( isset ($thismatch->racketeers_match_player_2) ) {
 		$user_info = get_userdata( $thismatch->racketeers_match_player_2 );
-		echo "pla2: ". $user_info->data->display_name . "</br>";
+		echo "pla2: ". $user_info->data->display_name . "   " . $thismatch->racketeers_match_player_2_status . "</br>";
+		racketeers_add_sub_button( $current_user_id, $user_info->ID, $thismatch->racketeers_match_player_2_status ); 
 
 	} else if ( ! $placed_button && ! $current_user_is_playing ) {
-		echo '<input type="submit" name="player_action" value="Add me as player 2" /></br>';
+		echo ' <input type="submit" name="player_action" value="Add me as player 2" /></br>';
 		$placed_button = true;
 
 	} else {
@@ -241,14 +260,21 @@ function racketeers_show_match_players_choice ( $thismatch )
 
 	if ( isset ($thismatch->racketeers_match_player_3) ) {
 		$user_info = get_userdata( $thismatch->racketeers_match_player_3 );
-		echo "pla3: ". $user_info->data->display_name . "</br>";
+		echo "pla3: ". $user_info->data->display_name. "   " . $thismatch->racketeers_match_player_3_status . "</br>";
+		racketeers_add_sub_button( $current_user_id, $user_info->ID, $thismatch->racketeers_match_player_3_status ); 
+
 	} else if ( ! $placed_button && ! $current_user_is_playing ) {
-		echo '<input type="submit" name="player_action" value="Add me as player 3" /></br>';
+		echo ' <input type="submit" name="player_action" value="Add me as player 3" /></br>';
 		$placed_button = true;
 	} else {
 		echo 'player 3 not signed up yet</br>';
 	}
+}
 
+function racketeers_add_sub_button( $current_user_id, $player_id, $status ){
 
-
+	if (( $current_user_id == $player_id ) && ( $status != "needsub")) {
+		echo '<input type="submit" name="player_action" value="I need a sub" /></br>';
+		echo "<input type='hidden' name='sub_for' value='$current_user_id' /></br>";
+	}
 }

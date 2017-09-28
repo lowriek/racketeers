@@ -23,7 +23,7 @@ function racketeers_match_create_table ( $match_table_name) {
 		racketeers_match_player_1 int,
 		racketeers_match_player_2 int,
 		racketeers_match_player_3 int,
-		racketeers_host_status ENUM('confirmed', 'unconfirmed', 'needsub'),
+		racketeers_match_host_status ENUM('confirmed', 'unconfirmed', 'needsub'),
 		racketeers_match_player_1_status ENUM('confirmed', 'unconfirmed', 'needsub'),
 		racketeers_match_player_2_status ENUM('confirmed', 'unconfirmed', 'needsub'),
 		racketeers_match_player_3_status ENUM('confirmed', 'unconfirmed', 'needsub'),
@@ -288,7 +288,7 @@ function racketeers_show_match_players ( $match_id ) {
 	$thismatch = racketeers_get_match_by_id ( $match_id );
 
 	racketeers_show_one_match_player( "Player Host:  ", 
-									$thismatch['racketeers_host_status'], 
+									$thismatch['racketeers_match_host_status'], 
 									$thismatch['racketeers_match_host'] );
 
 	racketeers_show_one_match_player( "   Player 1:  ", 

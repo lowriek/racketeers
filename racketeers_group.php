@@ -113,21 +113,17 @@ function racketeers_delete_group_info ( ) {
 	
 	if ( ! racketeers_is_user_organizer( $current_user_id ) ){
 		if ( $debug ) {
-			echo "[racketeers_delete_group] delete_group_info failed, user is not an organizer </br> ";
+			echo "[racketeers_delete_group_info] delete_group_info failed, user is not an organizer </br> ";
 		}
 		return false;
 	}
 
 	/* now we know the user is an organizer, so delete the group meta data **/
-	if ( ! delete_user_meta( $current_user_id, "racketeers_name" )  ||
-		 ! delete_user_meta( $current_user_id, "racketeers_day" ) ||
-		 ! delete_user_meta( $current_user_id, "racketeers_time" ) ||
-		 ! delete_user_meta( $current_user_id, "racketeers_match_duration" ) ||
-		 ! delete_user_meta( $current_user_id, "racketeers_last_match_timestamp" ) ){
+	if ( ! racketeers_delete_group_meta( $current_user_id ) ) {
 		if ( $debug ) {
-			echo "[racketeers_delete_group] delete_group_info failed - can't delete user meta </br> ";
+			echo "[racketeers_delete_group_info] delete group meta failed - just a warning...</br> ";
+
 		}
-		return false;
 	}
 
 	/* delete all matches from the current group - maybe we should do this first? */
@@ -138,6 +134,39 @@ function racketeers_delete_group_info ( ) {
 	$rows_affected = $wpdb->delete( $table_name, $where,  '%d' );
 
 	return $rows_affected;
+}
+
+/** racketeers_delete_group_meta()
+ *
+ */
+function racketeers_delete_group_meta( $current_user_id ) {
+	global $debug;
+
+	if ( ! delete_user_meta( $current_user_id, "racketeers_day" ) ){
+		if ( $debug ) {
+			echo "[racketeers_delete_group_meta] - delete group day failed </br> ";
+		}
+		return false;
+	}
+	if ( ! delete_user_meta( $current_user_id, "racketeers_time" ) ){
+		if ( $debug ) {
+			echo "[racketeers_delete_group_meta] - delete group time failed </br> ";
+		}
+	}
+	if ( ! delete_user_meta( $current_user_id, "racketeers_match_duration" ) ){
+		if ( $debug ) {
+			echo "[racketeers_delete_group_meta] - delete group duration failed </br> ";
+		}
+		return false;
+	}
+	if ( ! delete_user_meta( $current_user_id, "racketeers_last_match_timestamp" ) ){
+		if ( $debug ) {
+			echo "[racketeers_delete_group_info] - delete group timestamp failed </br> ";
+		}
+		return false;
+	}
+	delete_user_meta( $current_user_id, "group_member" ); // okay if this fails because there might not be members.
+	return true;
 }
 
 /** racketeers_is_user_organizer
